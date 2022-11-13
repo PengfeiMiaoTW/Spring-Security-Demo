@@ -14,7 +14,8 @@ import java.util.Set;
 @Entity
 @Table(name = "tbl_users")
 @Data
-@AllArgsConstructor @NoArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class User {
     @Id

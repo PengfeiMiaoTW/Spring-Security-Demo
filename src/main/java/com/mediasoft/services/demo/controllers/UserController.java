@@ -7,6 +7,7 @@ import com.mediasoft.services.demo.entities.User;
 import com.mediasoft.services.demo.repositories.IRole;
 import com.mediasoft.services.demo.services.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,7 +17,7 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,42 +30,42 @@ public class UserController {
     @Autowired
     private IRole roleRepo;
 
-    @GetMapping({"/", "/login"})
+    @GetMapping( "/login")
     public String index() {
         return "index";
     }
 
     @GetMapping("/signup")
     public String signup(Model model) {
-        Role userRole = roleRepo.findByName("USER");
-        List<Role> roles = Arrays.asList(userRole);
+        Role userRole = roleRepo.findByName("ROLE_USER");
+        List<Role> roles = Collections.singletonList(userRole);
 
-        model.addAttribute("signup",true);
+        model.addAttribute("signup", true);
         model.addAttribute("userForm", new User());
-        model.addAttribute("roles",roles);
+        model.addAttribute("roles", roles);
         return "user-form/user-signup";
     }
 
     @PostMapping("/signup")
-    public String signupAction(@Valid @ModelAttribute("userForm")User user, BindingResult result, ModelMap model) {
-        Role userRole = roleRepo.findByName("USER");
-        List<Role> roles = Arrays.asList(userRole);
+    public String signupAction(@Valid @ModelAttribute("userForm") User user, BindingResult result, ModelMap model) {
+        Role userRole = roleRepo.findByName("ROLE_USER");
+        List<Role> roles = Collections.singletonList(userRole);
         model.addAttribute("userForm", user);
-        model.addAttribute("roles",roles);
-        model.addAttribute("signup",true);
+        model.addAttribute("roles", roles);
+        model.addAttribute("signup", true);
 
-        if(result.hasErrors()) {
+        if (result.hasErrors()) {
             return "user-form/user-signup";
-        }else {
+        } else {
             try {
                 service.createUser(user);
             } catch (CustomeFieldValidationException cfve) {
-                result.rejectValue(cfve.getFieldName(), null, cfve.getMessage());
-            }catch (Exception e) {
-                model.addAttribute("formErrorMessage",e.getMessage());
+                result.rejectValue(cfve.getFieldName(), "", cfve.getMessage());
+            } catch (Exception e) {
+                model.addAttribute("formErrorMessage", e.getMessage());
             }
         }
-        return index();
+        return "index";
     }
 
     @GetMapping("/userForm")
@@ -82,7 +83,7 @@ public class UserController {
         if (result.hasErrors()) {
             model.addAttribute("userForm", user);
             model.addAttribute("formTab", "active");
-        }else {
+        } else {
             try {
                 service.createUser(user);
                 model.addAttribute("userForm", new User());
@@ -121,7 +122,7 @@ public class UserController {
             model.addAttribute("formTab", "active");
             model.addAttribute("editMode", "true");
             model.addAttribute("passwordForm", new ChangePasswordForm(user.getId()));
-        }else {
+        } else {
             try {
                 service.updateUser(user);
                 model.addAttribute("userForm", new User());
@@ -147,14 +148,15 @@ public class UserController {
 
     @GetMapping("/userForm/cancel")
     public String cancelEditUser(ModelMap modelMap) {
+        System.out.println(modelMap);
         return "redirect:/userForm";
     }
 
     @GetMapping("/deleteUser/{id}")
-    public String deleteUser(Model model, @PathVariable(name = "id") Long id) throws Exception {
+    public String deleteUser(Model model, @PathVariable(name = "id") Long id) {
         try {
             service.deleteUser(id);
-        }catch (Exception e) {
+        } catch (Exception e) {
             model.addAttribute("listErrorMessage", e.getMessage());
         }
 
@@ -162,11 +164,11 @@ public class UserController {
     }
 
     @PostMapping("/editUser/changePassword")
-    public ResponseEntity postEditUseChangePassword(@Valid @RequestBody ChangePasswordForm form, Errors errors) {
+    public ResponseEntity<?> postEditUseChangePassword(@Valid @RequestBody ChangePasswordForm form, Errors errors) {
         try {
-            if( errors.hasErrors()) {
+            if (errors.hasErrors()) {
                 String result = errors.getAllErrors()
-                        .stream().map(x -> x.getDefaultMessage())
+                        .stream().map(DefaultMessageSourceResolvable::getDefaultMessage)
                         .collect(Collectors.joining(""));
 
                 throw new Exception(result);

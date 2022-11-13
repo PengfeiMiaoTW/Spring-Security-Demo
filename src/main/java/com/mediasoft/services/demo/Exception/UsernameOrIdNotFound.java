@@ -4,7 +4,7 @@ public class UsernameOrIdNotFound extends Exception {
     private static final long serialVersionUID = 1668398822129870029L;
 
     public UsernameOrIdNotFound() {
-        super("Usuario o Id no encontrado");
+        super("Username or Id not exist");
     }
 
     public UsernameOrIdNotFound(String message) {
